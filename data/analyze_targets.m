@@ -80,8 +80,3 @@ disp(find(missingMask));
 disp('? File loaded successfully with parsed columns.');
 disp(['Rows: ', num2str(height(reaching)), ', Columns: ', num2str(width(reaching))]);
 disp(reaching(1:min(5,height(reaching)), 1:min(6,width(reaching))));
-
-valid_data = reaching(~missingMask,:);
-out_dir = fullfile(pwd,'organized_data');
-if ~exist(out_dir,'dir'); mkdir(out_dir); end
-save(fullfile(out_dir,'valid_data'),'valid_data')
