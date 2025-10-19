@@ -1,0 +1,87 @@
+clear; close all; clc;
+
+%% manage paths
+
+[project_dir, ~]= fileparts(pwd);
+[git_dir, ~] = fileparts(project_dir);
+data_dir = fullfile(project_dir, 'data','organized_data');
+addpath(genpath(fullfile(git_dir, 'bads'))); % add optimization tool, here we use BADS for example
+out_dir = fullfile(pwd, folders{i_model}); % output will be saved to the model folder
+if ~exist(out_dir, 'dir'); mkdir(out_dir); end
+
+%% organize data
+
+% Extract real covariance matrix once data is available
+sig_x = 1; % X and Y have similar smaller variances
+sig_y = 1;
+sig_z = 2; % Z has larger variance 
+sig_xy = 0;
+sig_xz = -0.1;
+sig_yz = 0.1;
+
+Sigma = [sig_x, sig_xy, sig_xz;
+         sig_xy, sig_y, sig_yz; 
+         sig_xz, sig_yz, sig_z];
+
+%% set up model
+
+model.n_run = 5; % number of fits for each model
+model.empirical_cov = Sigma;
+model.n_trial = 1000;
+model.hit_threshold = 0.05; % m
+model.hit_gain = 100;
+model.penalty_gain = -100;
+
+%% load data
+
+load(fullfile(data_dir,'IP_valid_data.mat'));
+target_corrs = [valid_data.TargetX, valid_data.TargetY, valid_data.TargetZ];
+target_conditions = unique(target_corrs, 'rows');
+penalty_conditions = [-5, 0, 0; 5, 0, 0; 0, -5, 0; 0, 5, 0; 0, 0, -5; 0, 0, 5];
+
+for cc = 1:numel(target_conditions)
+
+    for pp = 1:numel(penalty_conditions)
+        
+        %% condition-specific model setting
+
+        model.target_corr = target_coors(cc,:);
+        model.penalty_cond = penalty_conditions(pp,:);
+
+        %% run
+      
+        curr_model =  'optimal_gain';
+
+        model.mode = 'initialize';
+        val = curr_model([], model, []);
+        model.init_val = val;
+
+        model.mode = 'optimize';
+        llfun = @(x) curr_model(x, model, i_data);
+        fprintf('[%s] Start fitting model-%s\n', mfilename, fit_str);
+
+        % fit the model multiple times with different initial values
+        est_p = nan(model.n_run, val.num_param);
+        nll = nan(1, model.n_run);
+        for i  = 1:model.n_run
+            [est_p(i,:), nll(i)] = bads(llfun,...
+                val.init(i,:), val.lb, val.ub, val.plb, val.pub);
+        end
+
+        % find the best fits across runs
+        [min_nll, best_idx] = min(nll);
+        best_p = est_p(best_idx, :);
+        fits(i_sample).best_p = best_p;
+        fits(i_sample).min_nll = min_nll;
+
+        %% model prediction using the best-fitting parameters
+
+        model.mode = 'predict';
+        pred = curr_model(best_p, model, []);
+
+    end
+end
+%% save full results
+fprintf('[%s] Model simulation done! Saving full results.\n', mfilename);
+flnm = 'example_results';
+save(fullfile(out_dir, flnm), 'data','model','fits','pred');

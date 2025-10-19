@@ -80,3 +80,10 @@ disp(find(missingMask));
 disp('? File loaded successfully with parsed columns.');
 disp(['Rows: ', num2str(height(reaching)), ', Columns: ', num2str(width(reaching))]);
 disp(reaching(1:min(5,height(reaching)), 1:min(6,width(reaching))));
+
+% organize data
+numInvalidStart = sum(strcmp(reaching.Result, 'Invalid Start'));
+
+%% separate trials with no penalty
+noPenaltyTrials = reaching(reaching.PenaltyX == 0 & reaching.PenaltyY == 0 & reaching.PenaltyZ == 0, :);
+penaltyTrials = reaching(reaching.PenaltyX ~= 0 | reaching.PenaltyY ~= 0 | reaching.PenaltyZ ~= 0, :);
