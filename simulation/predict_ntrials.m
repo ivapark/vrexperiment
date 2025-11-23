@@ -92,8 +92,8 @@ np_ntrials = 60:20:160; % numbers of trials of no-penalty condition
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
 opt_aim = model.target_coor + best_p;
 
-sample_mean_diff = nan(length(p_ntrials), length(np_ntrials), sim_ntrial, 3); 
-CI_95 = nan(length(p_ntrials), length(np_ntrials), 2, 3);
+sample_mean_diff = nan(length(p_ntrials), length(np_ntrials), sim_ntrial); 
+CI_95 = nan(length(p_ntrials), length(np_ntrials), 2);
 for mm = 1:length(p_ntrials)
     model.penalty_ntrial = p_ntrials(mm);
 
@@ -109,14 +109,12 @@ for mm = 1:length(p_ntrials)
             % Simulate endpoints of no penalty condition
             ep_penalty = mvnrnd(opt_aim, M.empirical_cov, M.no_penalty_ntrial);
 
-            % Calculate sample mean difference
-            sample_mean_diff(mm,nn,tt,:) = mean(ep_penalty) - mean(ep_nopenalty);
+            % Calculate sample mean euclidean distance difference
+            sample_mean_diff(mm,nn,tt) = sqrt(sum((mean(ep_penalty, 1) - mean(ep_nopenalty, 1)).^2));
         end
 
-        for dd = 1:3
-            % Calculate 95% confidence interval for each dimension
-            CI_95(mm, nn, :, dd) = prctile(squeeze(sample_mean_diff(mm,nn,:,dd)), [2.5, 97.5]);
-        end
+        % Calculate 95% confidence interval
+        CI_95(mm, nn, :) = prctile(sample_mean_diff(mm,nn,:), [2.5, 97.5]);
         
     end
 end
@@ -127,8 +125,9 @@ end
 % Use the same x and y limits for all subplots
 all_sample_mean_diff = sample_mean_diff(:);
 edges = linspace(min(all_sample_mean_diff), max(all_sample_mean_diff), 100);
-xmin = min(all_sample_mean_diff);
-xmax = max(all_sample_mean_diff);
+xmin = min(0, min(all_sample_mean_diff));
+xmax = max(max(all_sample_mean_diff),0);
+
 
 % Compute the maximum y-limit across all histograms
 ymax = 0;
@@ -140,18 +139,14 @@ for mm = 1:numel(p_ntrials)
     end
 end
 
-dims = {'X', 'Y', 'Z'};
-for dd = 1:3
-
 figure;
 set(gcf, 'Position', get(0, 'Screensize'));
 tiledlayout(numel(p_ntrials), numel(np_ntrials)); % Penalty x no penalty
-sgtitle(sprintf('Dimension %s', dims{dd}));
 
 for mm = 1:numel(p_ntrials)
     for nn = 1:numel(np_ntrials)
         nexttile;
-        h = histogram(squeeze(sample_mean_diff(mm, nn, :, dd)), edges);
+        h = histogram(squeeze(sample_mean_diff(mm, nn, :)), edges);
         h.EdgeColor = 'none';
         xlim([xmin xmax]);
         ylim([0 ymax]);
@@ -159,21 +154,20 @@ for mm = 1:numel(p_ntrials)
 
         % add CI 95%
         if mm == 1 && nn ==1
-            xline(squeeze(CI_95(mm, nn, 1, dd)), 'k-', 'lineWidth',1.5,'label','95% CI');
-            xline(squeeze(CI_95(mm, nn, 2, dd)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
+            xline(squeeze(CI_95(mm, nn, 1)), 'k-', 'lineWidth',1.5,'label','95% CI');
+            xline(squeeze(CI_95(mm, nn, 2)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
             xline(0, 'r--','lineWidth',1.5,'label', 'No difference');
-            xlabel('Sample mean difference (m)');
+            xlabel('Sample mean L2 difference (m)');
             ylabel('Frequency');
             
         else
-            xline(squeeze(CI_95(mm, nn, 1, dd)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
-            xline(squeeze(CI_95(mm, nn, 2, dd)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
+            xline(squeeze(CI_95(mm, nn, 1)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
+            xline(squeeze(CI_95(mm, nn, 2)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
             xline(0, 'r--','lineWidth',1.5,'handleVisibility','off');
         end
     end
 
 end
 
-saveas(gcf, fullfile(out_dir, sprintf('predict_ntrials_%d_%d_%s.png', p_ntrials(end), np_ntrials(end), dims{dd})));
+saveas(gcf, fullfile(out_dir, sprintf('predict_ntrials_%d_%d.png', p_ntrials(end), np_ntrials(end))));
 
-end
