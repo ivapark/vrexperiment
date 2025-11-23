@@ -6,9 +6,9 @@ if strcmp(model.mode, 'initialize')
     out.num_param = length(out.param_id);
 
     % hard bounds, the range for lb, ub, larger than soft bounds
-    param_h.dx = [-0.2, 0.2]; % m
-    param_h.dy = [-0.2, 0.2]; % m
-    param_h.dz = [-0.2, 0.2]; % m
+    param_h.dx = [-0.3, 0.3]; % m
+    param_h.dy = [-0.3, 0.3]; % m
+    param_h.dz = [-0.3, 0.3]; % m
 
     % soft bounds, the range for plb, pub
     param_s.dx = [-0.1, 0.1]; % m
@@ -27,7 +27,7 @@ if strcmp(model.mode, 'initialize')
     model.param_h = param_h;
 
     % get grid initializations
-    num_sections = model.n_run;
+    num_sections = 2*model.n_run;
     out.init = getInit(out.lb, out.ub, num_sections, model.n_run);
 
 else
