@@ -41,6 +41,22 @@ for i = 1:numel(splitData)
                 row{j} = 'Invalid Start';
                 row(j+1) = [];
                 break;
+            elseif strcmp(row{j}, 'Too') && strcmp(row{j+1}, 'Slow')
+                row{j} = 'Too Slow';
+                row(j+1) = [];
+                break;
+            elseif strcmp(row{j}, 'Hit') && strcmp(row{j+1}, 'Target')
+                row{j} = 'Hit Target';
+                row(j+1) = [];
+                break;
+            elseif strcmp(row{j}, 'Hit') && strcmp(row{j+1}, 'Penalty')
+                row{j} = 'Hit Penalty';
+                row(j+1) = [];
+                break;
+            elseif strcmp(row{j}, 'Hit') && strcmp(row{j+1}, 'Both')
+                row{j} = 'Hit Both';
+                row(j+1) = [];
+                break;
             elseif strcmp(row{j}, 'Too') && strcmp(row{j+1}, 'Early')
                 row{j} = 'Too Early';
                 row(j+1) = [];
@@ -72,6 +88,9 @@ end
 
 % --- Step 7: Create table ---
 DATA = cell2table(dataMatrix, 'VariableNames', headers);
+
+    exclude_mask = strcmp(DATA.Result, 'Invalid Start') | strcmp(DATA.Result, 'Too Slow') | strcmp(DATA.Result, 'Too Early');
+    DATA(exclude_mask, :) = [];
 
 % --- Display result ---
 % Find rows with missing values
