@@ -3,10 +3,10 @@
 % ===============================
 
 % filename = 'IP_2025-09-19_12-47-24_reaching_data.tsv';
-filename = 'IP_2025-10-17_13-22-38_reaching_data.tsv';
+filename = 'IP_2025-12-12_17-01-38_reaching_data.tsv';
 T = readtable(filename, 'FileType', 'text', 'Delimiter', '\t', 'ReadVariableNames', false);
 
-% --- Convert endpoint columns (Var21–Var23) to numeric ---
+% --- Convert endpoint columns (Var21ï¿½Var23) to numeric ---
 x = str2double(erase(T.Var21, "'"));
 y = str2double(erase(T.Var22, "'"));
 z = str2double(erase(T.Var23, "'"));
