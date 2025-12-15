@@ -6,14 +6,14 @@ if strcmp(model.mode, 'initialize')
     out.num_param = length(out.param_id);
 
     % hard bounds, the range for lb, ub, larger than soft bounds
-    param_h.dx = [-0.3, 0.3]; % m
-    param_h.dy = [-0.3, 0.3]; % m
-    param_h.dz = [-0.3, 0.3]; % m
+    param_h.dx = [-30, 30]; % mm
+    param_h.dy = [-30, 30]; % mm
+    param_h.dz = [-30, 30]; % mm
 
     % soft bounds, the range for plb, pub
-    param_s.dx = [-0.1, 0.1]; % m
-    param_s.dy = [-0.1, 0.1]; % m
-    param_s.dz = [-0.1, 0.1]; % m
+    param_s.dx = [-10, 10]; % mm
+    param_s.dy = [-10, 10]; % mm
+    param_s.dz = [-10, 10]; % mm
 
     % reorganize parameter bounds to feed to bads
     fields = fieldnames(param_h);
@@ -66,11 +66,13 @@ function gain = gain_function(target_coor, penalty_cond, endpoint, model)
     penalty_distance = penalty_cond(penalty_dim);
 
     if penalty_distance > 0 % e.g., penalty is on the right of the target
-        penalty_trial = endpoint(:, penalty_dim_idx) - penalty_distance > 0;
+        board = target_coor(penalty_dim_idx) + penalty_distance;
+        penalty_trial = endpoint(:, penalty_dim_idx) - board > 0;
         gain(penalty_trial) = gain(penalty_trial) + model.penalty_gain;
 
     else % e.g., penalty is on the left of the target
-        penalty_trial = endpoint(:, penalty_dim_idx) - penalty_distance < 0;
+        board = target_coor(penalty_dim_idx) - penalty_distance;
+        penalty_trial = endpoint(:, penalty_dim_idx) - board < 0;
         gain(penalty_trial) = gain(penalty_trial) + model.penalty_gain;
     end
 

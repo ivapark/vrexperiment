@@ -11,167 +11,162 @@ if ~exist(out_dir, 'dir'); mkdir(out_dir); end
 
 %% set up model
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Set covariance matrix. Extract real covariance matrix once data is available
+% Load data
 load(fullfile(project_dir,'processed_data.mat'))
-% all_endpoint = [];
-% for ii = 1:9
-%  all_endpoint = [all_endpoint;ENDPOINT{ii} - TARGET{ii}];
-% end
-% ALL_COV = cov(all_endpoint);
-% sig_x = 0.01; % m, X and Y have similar smaller variances
-% sig_y = 0.01;
-% sig_z = 0.02; % Z has larger variance
-% sig_xy = 0.005;
-% sig_xz = 0.005;
-% sig_yz = 0.005;
-Sigma = COV{1};
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Adjust experiment parameters accordingly
 model.sim_trial = 1e5; % number of simulations of reaches in optimization
-model.empirical_cov = Sigma;
-model.hit_threshold = 0.003; % m, target radius
+model.hit_threshold = 3; % mm, target radius
 model.hit_gain = 0.3;
 model.penalty_gain = -0.5;
-model.penalty_threshold = 0.003; % m, distance between target center and the edge of the penalty zone
+model.penalty_threshold = 3; % mm, distance between target center and the edge of the penalty zone
 
 % Used one coordinate, one penalty condition for example
-model.target_coor = TARGET{1};%[-1, 1.1, 2.44];
-model.penalty_cond = [-model.penalty_threshold, 0, 0];
+model.penalty_cond = [model.penalty_threshold, 0, 0];
 
 %% set up model fitting
 
-model.n_run = 100; % number of fits for each model
+model.n_run = 50; % number of fits for each model
 options.UncertaintyHandling = true;
 
 %% Simulation start
-%% 1. Predict optimal aiming point
+n_target = 9;
 
-curr_model =  str2func('optimal_gain');
+fits = struct();
+for ii = 1:n_target
 
-model.mode = 'initialize';
-val = curr_model([], model);
-model.init_val = val;
+    %% Set covariance matrix for this target condition
+    model.empirical_cov = COV{ii};
+    model.target_coor = TARGET{ii};
 
-model.mode = 'optimize';
-neg_gain_func = @(x) -curr_model(x, model);
+    %% 1. Predict optimal aiming point
 
-% For debug purpose
-% testp = [0.13330078125 0 0.13330078125];
-% test = neg_gain_func(testp);
+    curr_model =  str2func('optimal_gain');
 
-% Fit the model multiple times with different initial values
-est_p = nan(model.n_run, val.num_param);
-neg_gain = nan(1, model.n_run);
-parfor i  = 1:model.n_run
-    temp_val = val;
-    [est_p(i,:), neg_gain(i)] = bads(neg_gain_func,...
-        temp_val.init(i,:), temp_val.lb, temp_val.ub, temp_val.plb, temp_val.pub);
-end
+    model.mode = 'initialize';
+    val = curr_model([], model);
+    model.init_val = val;
 
-% Find the best fits across runs
-[min_neg_gain, best_idx] = min(neg_gain);
-best_p = est_p(best_idx, :);
-fits.param_info = val;
-fits.est_p = est_p;
-fits.best_p = best_p;
-fits.max_gain = -min_neg_gain;
+    model.mode = 'optimize';
+    neg_gain_func = @(x) -curr_model(x, model);
 
-% Check histogram of parameter estimates
-% figure;
-% for pp = 1:3
-% subplot(1,3,pp)
-%     histogram(est_p(:,pp))
-%     xline(best_p(pp),'r')
-% end
+    % For debug purpose
+    testp = [0.13330078125 0 0.13330078125];
+    test = neg_gain_func(testp);
 
-%% 2. Simulate sample mean difference between penalty and no penalty conditions
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
-sim_ntrial = 10000; % number of simulation (i.e., participants)
-p_ntrials = 20:20:80; % numbers of trials of penalty condition
-np_ntrials = 60:20:160; % numbers of trials of no-penalty condition
-%%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
-opt_aim = model.target_coor + best_p;
-
-sample_mean_diff = nan(length(p_ntrials), length(np_ntrials), sim_ntrial); 
-CI_95 = nan(length(p_ntrials), length(np_ntrials), 2);
-for mm = 1:length(p_ntrials)
-    model.penalty_ntrial = p_ntrials(mm);
-
-    for nn = 1:length(np_ntrials)
-        model.no_penalty_ntrial = np_ntrials(nn);
-
-        parfor tt = 1:sim_ntrial
-            M = model;
-
-            % Simulate endpoints of penalty condition
-            ep_nopenalty = mvnrnd(M.target_coor, M.empirical_cov, M.penalty_ntrial);
-
-            % Simulate endpoints of no penalty condition
-            ep_penalty = mvnrnd(opt_aim, M.empirical_cov, M.no_penalty_ntrial);
-
-            % Calculate sample mean euclidean distance difference
-            sample_mean_diff(mm,nn,tt) = sqrt(sum((mean(ep_penalty, 1) - mean(ep_nopenalty, 1)).^2));
-        end
-
-        % Calculate 95% confidence interval
-        CI_95(mm, nn, :) = prctile(sample_mean_diff(mm,nn,:), [2.5, 97.5]);
-        
+    % Fit the model multiple times with different initial values
+    est_p = nan(model.n_run, val.num_param);
+    neg_gain = nan(1, model.n_run);
+    parfor i  = 1:model.n_run
+        temp_val = val;
+        [est_p(i,:), neg_gain(i)] = bads(neg_gain_func,...
+            temp_val.init(i,:), temp_val.lb, temp_val.ub, temp_val.plb, temp_val.pub);
     end
-end
 
-%% 3. Plot histogram of sample mean difference with 95% CI
+    % Find the best fits across runs
+    [min_neg_gain, best_idx] = min(neg_gain);
+    best_p = est_p(best_idx, :);
+    fits(ii).param_info = val;
+    fits(ii).est_p = est_p;
+    fits(ii).best_p = best_p;
+    fits(ii).max_gain = -min_neg_gain;
 
+    % Check histogram of parameter estimates
+    % figure;
+    % for pp = 1:3
+    % subplot(1,3,pp)
+    %     histogram(est_p(:,pp))
+    %     xline(best_p(pp),'r')
+    % end
 
-% Use the same x and y limits for all subplots
-all_sample_mean_diff = sample_mean_diff(:);
-edges = linspace(min(all_sample_mean_diff), max(all_sample_mean_diff), 100);
-xmin = min(0, min(all_sample_mean_diff));
-xmax = max(max(all_sample_mean_diff),0);
+    %% 2. Simulate sample mean difference between penalty and no penalty conditions
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    sim_ntrial = 10000; % number of simulation (i.e., participants)
+    p_ntrials = 10:10:50; % numbers of trials of penalty condition
+    np_ntrials = 20:10:60; % numbers of trials of no-penalty condition
+    %%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    opt_aim = model.target_coor + best_p;
+    fits(ii).opt_L2 = sqrt(sum((opt_aim - model.target_coor).^2));
+    fits(ii).opt_aim = opt_aim;
 
-% Compute the maximum y-limit across all histograms
-ymax = 0;
-for mm = 1:numel(p_ntrials)
-    for nn = 1:numel(np_ntrials)
-        h = histogram(squeeze(sample_mean_diff(mm, nn, :)), edges, 'Visible', 'off');
-        ymax = max(ymax, max(h.Values));
-        delete(h);
-    end
-end
+    CI_95 = nan(length(p_ntrials), length(np_ntrials), 2);
+    for mm = 1:length(p_ntrials)
+        model.penalty_ntrial = p_ntrials(mm);
 
-figure;
-set(gcf, 'Position', get(0, 'Screensize'));
-tiledlayout(numel(p_ntrials), numel(np_ntrials)); % Penalty x no penalty
+        for nn = 1:length(np_ntrials)
+            model.no_penalty_ntrial = np_ntrials(nn);
 
-for mm = 1:numel(p_ntrials)
-    for nn = 1:numel(np_ntrials)
-        nexttile;
-        h = histogram(squeeze(sample_mean_diff(mm, nn, :)), edges);
-        h.EdgeColor = 'none';
-        xlim([xmin xmax]);
-        ylim([0 ymax]);
-        title({sprintf('#trials in penalty: %d', p_ntrials(mm)), sprintf('#trials in no penalty: %d', np_ntrials(nn))});
+            [h,p] = deal(3, sim_ntrial);
+            parfor tt = 1:sim_ntrial
+                M = model;
 
-        % add CI 95%
-        if mm == 1 && nn ==1
-            xline(squeeze(CI_95(mm, nn, 1)), 'k-', 'lineWidth',1.5,'label','95% CI');
-            xline(squeeze(CI_95(mm, nn, 2)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
-            xline(0, 'r--','lineWidth',1.5,'label', 'No difference');
-            xlabel('Sample mean L2 difference (m)');
-            ylabel('Frequency');
-            
-        else
-            xline(squeeze(CI_95(mm, nn, 1)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
-            xline(squeeze(CI_95(mm, nn, 2)), 'k-', 'lineWidth',1.5,'handleVisibility','off');
-            xline(0, 'r--','lineWidth',1.5,'handleVisibility','off');
+                % Simulate endpoints of penalty condition
+                ep_nopenalty = mvnrnd(M.target_coor, M.empirical_cov, M.penalty_ntrial);
+
+                % Simulate endpoints of no penalty condition
+                ep_penalty = mvnrnd(opt_aim, M.empirical_cov, M.no_penalty_ntrial);
+
+                % Do t-test for each of the dimension
+                [h1(tt), ~]  = ttest2(ep_penalty(:, 1), ep_nopenalty(:,1));
+                [h2(tt), ~]  = ttest2(ep_penalty(:, 2), ep_nopenalty(:,2));
+                [h3(tt), ~]  = ttest2(ep_penalty(:, 2), ep_nopenalty(:,3));
+
+            end
+
+            sig(ii,mm,nn,1) = sum(h1)/sim_ntrial;
+            sig(ii,mm,nn,2) = sum(h2)/sim_ntrial;
+            sig(ii,mm,nn,3) = sum(h3)/sim_ntrial;
+
         end
     end
+    fits(ii).p_sig = sig;
+    fits(ii).sim_ntrial = sim_ntrial;
+    fits(ii).p_ntrials = p_ntrials;
+    fits(ii).np_ntrials = np_ntrials;
 
 end
 
-saveas(gcf, fullfile(out_dir, sprintf('predict_ntrials_%d_%d.png', p_ntrials(end), np_ntrials(end))));
+save(fullfile(out_dir,'sim.mat'))
 
+%% Plot
+
+figure; hold on;
+set(gcf,'Position',[0,0,2000,2000]);
+sgtitle('Penalty on the right of the target, x-axis')
+
+target_order = [7,8,9,4,5,6,1,2,3];
+
+for ii = 1:n_target
+
+    subplot(3, 3, target_order(ii)); % stack vertically for each target
+    imagesc(np_ntrials, p_ntrials, squeeze(sig(ii, :, :, 1))); % y: penalty, x: no penalty
+    colormap(gca, "bone");
+    caxis([0 1]); 
+    cb = colorbar('Ticks', [0 1], 'Limits', [0 1]);
+    cb.Label.String = 'Probability of significance';
+    xlabel('#trials in no penalty');
+    ylabel('#trials in penalty');
+    aim = fits(ii).best_p;
+    title(sprintf('Target %d, optimal shift %.1f, %.1f, %.1f (mm)', ii, aim(1), aim(2), aim(3)));
+
+    % Optional: show numeric values on heatmap
+    for mm = 1:length(p_ntrials)
+        for nn = 1:length(np_ntrials)
+            if squeeze(sig(ii, mm, nn, 1)) > 0.5
+                textcolor = 'k';
+            else
+                textcolor = 'w';
+            end
+            text(np_ntrials(nn), p_ntrials(mm), ...
+                sprintf('%.2f', sig(ii, mm, nn, 1)), ...
+                'HorizontalAlignment', 'center', ...
+                'VerticalAlignment', 'middle', ...
+                'Color', textcolor, ...
+                'FontSize',12);
+        end
+    end
+end
+
+set(findall(gcf, '-property', 'FontSize'), 'FontSize', 14);
+saveas(gcf,fullfile(out_dir, 'x_right_p_sig.png'))

@@ -131,7 +131,7 @@ axis equal;
 view(3);
 rotate3d on; 
 grid on;
-xlabel('X (mm)'); ylabel('Y (mm)'); zlabel('Z (mm)');
+xlabel('X'); ylabel('Y'); zlabel('Z');
 % xlim([-0.2,0.2]); ylim([0.8 1.2]); zlim([2.4,2.6]);
 
 for ii = 1:length(target_id)
@@ -163,6 +163,4 @@ for ii = 1:length(target_id)
 end
 legend({'Target', 'Endpoints'}, 'Location', 'northeastoutside');
 
-fig_dir = fullfile(pwd,['fig', mfilename]);
-if ~exist(fig_dir); mkdir(fig_dir); end
-save(fullfile(fig_dir, 'processed_data.mat'),'MU','COV','ENDPOINT','TARGET');
+saveas('processed_data.mat','MU')
