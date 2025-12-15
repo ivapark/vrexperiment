@@ -13,16 +13,20 @@ if ~exist(out_dir, 'dir'); mkdir(out_dir); end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Set covariance matrix. Extract real covariance matrix once data is available
-sig_x = 0.01; % m, X and Y have similar smaller variances
-sig_y = 0.01;
-sig_z = 0.02; % Z has larger variance
-sig_xy = 0.005;
-sig_xz = 0.005;
-sig_yz = 0.005;
+load(fullfile(project_dir,'processed_data.mat'))
+% all_endpoint = [];
+% for ii = 1:9
+%  all_endpoint = [all_endpoint;ENDPOINT{ii} - TARGET{ii}];
+% end
+% ALL_COV = cov(all_endpoint);
+% sig_x = 0.01; % m, X and Y have similar smaller variances
+% sig_y = 0.01;
+% sig_z = 0.02; % Z has larger variance
+% sig_xy = 0.005;
+% sig_xz = 0.005;
+% sig_yz = 0.005;
+Sigma = COV{1};
 
-Sigma = [sig_x, sig_xy, sig_xz;
-    sig_xy, sig_y, sig_yz;
-    sig_xz, sig_yz, sig_z];
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Set up for simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Adjust experiment parameters accordingly
@@ -34,7 +38,7 @@ model.penalty_gain = -0.5;
 model.penalty_threshold = 0.003; % m, distance between target center and the edge of the penalty zone
 
 % Used one coordinate, one penalty condition for example
-model.target_coor = [-1, 1.1, 2.44];
+model.target_coor = TARGET{1};%[-1, 1.1, 2.44];
 model.penalty_cond = [-model.penalty_threshold, 0, 0];
 
 %% set up model fitting

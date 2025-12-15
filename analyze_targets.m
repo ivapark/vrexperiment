@@ -157,7 +157,7 @@ for ii = 1:length(target_id)
      YE = reshape(ELLIPSOID(2,:), size(YS));
      ZE = reshape(ELLIPSOID(3,:), size(ZS));
 
-     surf(XE,YE,ZE,'FaceColor','b','FaceAlpha',0.1,'EdgeColor','none');
+     surf(XE,YE,ZE,'FaceColor','b','FaceAlpha',0.3,'EdgeColor','none');
 
 end
 legend({'Target', 'Endpoints'}, 'Location', 'northeastoutside');
