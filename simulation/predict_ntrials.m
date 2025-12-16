@@ -16,13 +16,13 @@ load(fullfile(project_dir,'processed_data.mat'))
 
 % Adjust experiment parameters accordingly
 model.sim_trial = 1e5; % number of simulations of reaches in optimization
-model.hit_threshold = 3; % mm, target radius
+model.hit_threshold = 10; % mm, target radius
 model.hit_gain = 0.3;
 model.penalty_gain = -0.5;
-model.penalty_threshold = 3; % mm, distance between target center and the edge of the penalty zone
+model.penalty_threshold = 0; % mm, distance between target center and the edge of the penalty zone
 
 % Used one coordinate, one penalty condition for example
-model.penalty_cond = [model.penalty_threshold, 0, 0];
+model.penalty_cond = [1, 0, 0]; % x, y, z, 1 means on the right of the target, -1 means on the left of the target
 
 %% set up model fitting
 
@@ -57,7 +57,7 @@ for ii = 1:n_target
     % Fit the model multiple times with different initial values
     est_p = nan(model.n_run, val.num_param);
     neg_gain = nan(1, model.n_run);
-    parfor i  = 1:model.n_run
+    for i  = 1:model.n_run
         temp_val = val;
         [est_p(i,:), neg_gain(i)] = bads(neg_gain_func,...
             temp_val.init(i,:), temp_val.lb, temp_val.ub, temp_val.plb, temp_val.pub);
@@ -90,7 +90,6 @@ for ii = 1:n_target
     fits(ii).opt_L2 = sqrt(sum((opt_aim - model.target_coor).^2));
     fits(ii).opt_aim = opt_aim;
 
-    CI_95 = nan(length(p_ntrials), length(np_ntrials), 2);
     for mm = 1:length(p_ntrials)
         model.penalty_ntrial = p_ntrials(mm);
 
@@ -98,19 +97,19 @@ for ii = 1:n_target
             model.no_penalty_ntrial = np_ntrials(nn);
 
             [h,p] = deal(3, sim_ntrial);
-            parfor tt = 1:sim_ntrial
+            for tt = 1:sim_ntrial
                 M = model;
 
-                % Simulate endpoints of penalty condition
+                % Simulate endpoints of no penalty condition
                 ep_nopenalty = mvnrnd(M.target_coor, M.empirical_cov, M.penalty_ntrial);
 
-                % Simulate endpoints of no penalty condition
+                % Simulate endpoints of penalty condition
                 ep_penalty = mvnrnd(opt_aim, M.empirical_cov, M.no_penalty_ntrial);
 
                 % Do t-test for each of the dimension
                 [h1(tt), ~]  = ttest2(ep_penalty(:, 1), ep_nopenalty(:,1));
                 [h2(tt), ~]  = ttest2(ep_penalty(:, 2), ep_nopenalty(:,2));
-                [h3(tt), ~]  = ttest2(ep_penalty(:, 2), ep_nopenalty(:,3));
+                [h3(tt), ~]  = ttest2(ep_penalty(:, 3), ep_nopenalty(:,3));
 
             end
 

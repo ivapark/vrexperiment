@@ -139,7 +139,7 @@ for ii = 1:length(target_id)
     % Plot the target
      scatter3(TARGET{ii}(:,1), TARGET{ii}(:,2), TARGET{ii}(:,3), 60, 'r', 'filled', 'DisplayName', 'Target');
 
-    % % Plot the endpoints
+    % Plot the endpoints
      scatter3(ENDPOINT{ii}(:,1), ENDPOINT{ii}(:,2), ENDPOINT{ii}(:,3), 30,'k', 'filled','MarkerFaceAlpha',0.5,'DisplayName', 'Endpoints');
 
      % Plot the covariance ellipsoid

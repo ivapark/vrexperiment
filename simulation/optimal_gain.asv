@@ -69,10 +69,17 @@ function gain = gain_function(target_coor, penalty_cond, endpoint, model)
     boarder = target_coor(penalty_dim_idx) + model.penalty_threshold * penalty_cond;
 
     % By multiplying penalty_cond, we simply flip the sign of the left
-    % condition. Then it reduces to the simple question whether the
-    % relevant axis of the current endpoints is further to the right of the
-    % penalty boarder.
+    % condition. T
     penalty_trial = (endpoint(:, penalty_dim_idx) - boarder) * penalty_cond > 0;
     gain(penalty_trial) = gain(penalty_trial) + model.penalty_gain;
+
+    if penalty_cond > 0 % e.g., penalty is on the right of the target
+        penalty_trial = endpoint(:, penalty_dim_idx) - boarder > 0;
+        gain(penalty_trial) = gain(penalty_trial) + model.penalty_gain;
+
+    else % e.g., penalty is on the left of the target
+        penalty_trial = endpoint(:, penalty_dim_idx) - board < 0;
+        gain(penalty_trial) = gain(penalty_trial) + model.penalty_gain;
+    end
 
 end
