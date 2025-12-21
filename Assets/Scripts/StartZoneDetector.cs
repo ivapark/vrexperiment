@@ -6,23 +6,19 @@ public class StartZoneDetector : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("RightHand")) // or check name/layer if needed
+        if (other.CompareTag("RightHand"))
         {
-            Debug.Log("Right hand entered StartZone");
             handIsInZone = true;
+            Debug.Log("Right hand entered StartZone");
         }
     }
-
 
     void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("RightHand"))
+        {
             handIsInZone = false;
-    }
-
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, 0.1f);
+            Debug.Log("Right hand exited StartZone");
+        }
     }
 }
