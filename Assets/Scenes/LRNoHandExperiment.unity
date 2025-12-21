@@ -296,7 +296,7 @@ Transform:
   m_GameObject: {fileID: 95285487}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 2.45}
+  m_LocalPosition: {x: 0, y: 1, z: 2.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1104,8 +1104,8 @@ MonoBehaviour:
   startCircleVisual: {fileID: 2033352779}
   startZoneDetector: {fileID: 2033352780}
   feedbackAnchor: {fileID: 95285488}
-  targetPrepMaterial: {fileID: 2100000, guid: 297f978a66783d64781566a8fb1527fb, type: 2}
-  penaltyPreorangeMaterial: {fileID: 2100000, guid: 647f3e3aee1144f44b6c908e72311e1f, type: 2}
+  targetPrepMaterial: {fileID: 2100000, guid: f5277e4c858df5f4b8d031c77fce7ac5, type: 2}
+  penaltyPreorangeMaterial: {fileID: 2100000, guid: bf72c365cea6c0248b2d087a4a1b55cc, type: 2}
   targetGoMaterial: {fileID: 2100000, guid: 7e6001637bb895e4f80684dfa3cdfc21, type: 2}
   penaltyGoMaterial: {fileID: 2100000, guid: 6c4f39cc95801054d87b0ffe17c61d83, type: 2}
   hitMaterial: {fileID: 2100000, guid: 5bb1987eeed24a641bcf17050acee09f, type: 2}
