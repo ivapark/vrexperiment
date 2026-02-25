@@ -7,6 +7,8 @@ ReadMe file last edited by: Rachel Chen (2026-2-25)
 ...
 
 ## Repo structure
+```text
+.
 ├── Branches:
   ├── main:                               # Updated codes for the pipeline (modeling and following analysis)
   ├── iva-data-update/                    # Luhe Li's test ground 
