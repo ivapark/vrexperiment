@@ -22,3 +22,9 @@ mainAna.m                                ← Main analysis script
       ├── project_to_optimal_shift_1D    ← Projection to 1D optimal shifts
       ├── ideal_observer_3D.m            ← 3D Ideal observer model
       └── project_to_optimal_shift_3D    ← Projection to 3D optimal shifts
+```
+## ❗️ Notes
+
+Make sure your [BADS] (https://github.com/acerbilab/bads?tab=readme-ov-file) is in your MATLAB path.
+
+Make sure _unityData_ is downloaded since it contains unity data.
