@@ -25,6 +25,6 @@ mainAna.m                                ← Main analysis script
 ```
 ## ❗️ Notes
 
-Make sure your [BADS] (https://github.com/acerbilab/bads?tab=readme-ov-file) is in your MATLAB path.
+Make sure your [BADS](https://github.com/acerbilab/bads?tab=readme-ov-file) is in your MATLAB path.
 
 Make sure _unityData_ is downloaded since it contains unity data.
