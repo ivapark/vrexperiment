@@ -2,14 +2,13 @@
 
 This branch contains analysis pipeline for the **VR reaching experiment**.
 
-Language: MATLAB 2025b
+🧑‍💻Language: MATLAB 2025b
 
-Last edited by Rachel Chen (2026-03-02)
+🕙Last edited by Rachel Chen (2026-03-02)
 
 ## 📂 Pipeline Structure
 
 ```text
-
 mainAna.m                                ← Main analysis script
 ├── fxnConfig.m                          ← Global configurations 
 ├── [Model-Free]
